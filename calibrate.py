@@ -1,12 +1,18 @@
 from __future__ import print_function
 import cv2 as cv
-import argparse, sys, os, glob
+import numpy as np
+import argparse
+import sys
+import os
+import glob
+
 
 def load_images(folder_path):
     os.chdir(folder_path)
-    image_files = glob.glob('*.jpg');
+    image_files = glob.glob('*.jpg')
     print('Found %s images' % len(image_files))
-    if len(image_files) == 0: return
+    if len(image_files) == 0:
+        return
 
     images = []
     print('Loading images ', end='')
@@ -21,6 +27,35 @@ def load_images(folder_path):
     return images
 
 
+def find_points(images):
+    pattern_size = (6, 7)
+    obj_points = []
+    img_points = []
+
+    # Assumed object points relation
+    a_object_point = np.zeros((6 * 7, 3), np.float32)
+    a_object_point[:, :2] = np.mgrid[0:7, 0:6].T.reshape(-1, 2)
+
+    # Termination criteria for sub pixel corners refinement
+    stop_criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER,
+                     30, 0.001)
+
+    print('Finding points ', end='')
+    for image in images:
+        found, corners = cv.findChessboardCorners(image, pattern_size, None)
+        if found:
+            obj_points.append(a_object_point)
+            refined_corners = cv.cornerSubPix(image, corners, (11, 11),
+                                              (-1, -1), stop_criteria)
+            img_points.append(refined_corners)
+            print('.', end='')
+        else:
+            print('-', end='')
+        sys.stdout.flush()
+
+    print('\nWas able to find points in %s images' % len(img_points))
+    return obj_points, img_points
+
 
 if __name__ == '__main__':
     args_parser = argparse.ArgumentParser()
@@ -28,4 +63,5 @@ if __name__ == '__main__':
                                              input JPEG images")
     args = args_parser.parse_args()
 
-    load_images(args.folder)
+    images = load_images(args.folder)
+    obj_points, img_points = find_points(images)
