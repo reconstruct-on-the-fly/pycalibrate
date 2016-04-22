@@ -45,9 +45,8 @@ def find_points(images):
         found, corners = cv.findChessboardCorners(image, pattern_size, None)
         if found:
             obj_points.append(a_object_point)
-            refined_corners = cv.cornerSubPix(image, corners, (11, 11),
-                                              (-1, -1), stop_criteria)
-            img_points.append(refined_corners)
+            cv.cornerSubPix(image, corners, (11, 11), (-1, -1), stop_criteria)
+            img_points.append(corners)
             print('.', end='')
         else:
             print('-', end='')
@@ -57,11 +56,26 @@ def find_points(images):
     return obj_points, img_points
 
 
+def calibrate(folder_path):
+    images = load_images(folder_path)
+    obj_points, img_points = find_points(images)
+
+    if len(img_points) == 0:
+        print('Impossible to calibrate: could not find any image points')
+        raise
+
+    print('Calibrating using %s images...' % len(img_points)) 
+    image_size = images[0].shape[::-1]
+
+    reprojection_error, camera_matrix, distortion_coefficient, rotation_v,\
+    translation_v = cv.calibrateCamera(obj_points, img_points, image_size)
+
+    print(camera_matrix)
+
+
 if __name__ == '__main__':
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument("folder", help="a folder path containing the\
                                              input JPEG images")
     args = args_parser.parse_args()
-
-    images = load_images(args.folder)
-    obj_points, img_points = find_points(images)
+    calibrate(args.folder)
