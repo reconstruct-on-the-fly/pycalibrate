@@ -1,5 +1,5 @@
 from __future__ import print_function
-from utils import load_images
+from utils import load_images, display_images
 import cv2 as cv
 import numpy as np
 import argparse
@@ -7,6 +7,7 @@ import sys
 
 
 DEBUG = False
+DISPLAY_SCALE = 0.45
 
 
 def find_points(images):
@@ -23,6 +24,7 @@ def find_points(images):
                      30, 0.001)
 
     print('Finding points ', end='')
+    debug_images = []
     for (image, color_image) in images:
         found, corners = cv.findChessboardCorners(image, pattern_size, None)
         if found:
@@ -36,10 +38,12 @@ def find_points(images):
 
         if DEBUG:
             cv.drawChessboardCorners(color_image, pattern_size, corners, found)
-            cv.imshow('corners', color_image)
-            cv.waitKey(0)
+            debug_images.append(color_image)
 
         sys.stdout.flush()
+
+    if DEBUG:
+        display_images(debug_images, DISPLAY_SCALE)
 
     print('\nWas able to find points in %s images' % len(img_points))
     return obj_points, img_points
@@ -74,9 +78,13 @@ if __name__ == '__main__':
                                              input JPEG images')
     args_parser.add_argument('-d', '--display-corners', action='store_true',
                              help='display resulting corners')
+    args_parser.add_argument('-s', '--scale', type=float, default=0.45,
+                             help='display scale to control window size')
     args = args_parser.parse_args()
 
     DEBUG = args.display_corners
+    DISPLAY_SCALE = args.scale
+
     images = load_images(args.folder)
     out = calibrate(images)
     print(out['camera_matrix'])
