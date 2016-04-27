@@ -1,5 +1,7 @@
 from __future__ import print_function
+from math import sqrt, floor, ceil
 import cv2 as cv
+import numpy as np
 import os
 import glob
 import sys
@@ -23,3 +25,29 @@ def load_images(folder_path):
 
     print('')
     return images
+
+
+def display_images(images, scale_factor):
+    height, width = images[0].shape[:2]
+    rows = int(floor(sqrt(len(images))))
+    cols = int(ceil(len(images) / float(rows)))
+
+    out_size = (rows * height, cols * width, 3)
+    out_image = np.full(out_size, 255, dtype=np.uint8)
+
+    # For every image, copy to output
+    for i in range(rows):
+        for j in range(cols):
+            k = (i * cols) + j
+            # only if we have enough images
+            if k < len(images):
+                new_row = i * height
+                new_col = j * width
+                out_image[new_row:(new_row + height),
+                          new_col:(new_col + width)] = images[k]
+
+    resized_out = cv.resize(out_image, (0, 0), fx=scale_factor,
+                            fy=scale_factor)
+
+    cv.imshow('Object points', resized_out)
+    cv.waitKey(0)
