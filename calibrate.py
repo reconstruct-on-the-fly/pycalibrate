@@ -2,22 +2,24 @@ from __future__ import print_function
 from utils import load_images, display_images
 import cv2 as cv
 import numpy as np
+import yaml
 import argparse
-import sys
+import sys, os
 
 
 DEBUG = False
 DISPLAY_SCALE = 0.45
+OUTPUT_FILE = os.getcwd() + '/output.yml'
 
 
 def find_points(images):
-    pattern_size = (7, 6)
+    pattern_size = (9, 6)
     obj_points = []
     img_points = []
 
     # Assumed object points relation
-    a_object_point = np.zeros((6 * 7, 3), np.float32)
-    a_object_point[:, :2] = np.mgrid[0:7, 0:6].T.reshape(-1, 2)
+    a_object_point = np.zeros((6 * 9, 3), np.float32)
+    a_object_point[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
 
     # Termination criteria for sub pixel corners refinement
     stop_criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER,
@@ -69,7 +71,16 @@ def calibrate(images):
     out['distortion_coefficient'] = distortion_coefficient
     out['rotation_v'] = rotation_v
     out['translation_v'] = translation_v
+    matrix_to_str(camera_matrix)
     return out
+
+def matrix_to_str(matrix):
+    matrix_str = str(matrix)
+    matrix_str = matrix_str.replace('[', '')
+    matrix_str = matrix_str.replace(']', '')
+    print(matrix_str)
+    return matrix_str
+        
 
 
 if __name__ == '__main__':
@@ -87,4 +98,7 @@ if __name__ == '__main__':
 
     images = load_images(args.folder)
     out = calibrate(images)
-    print(out['camera_matrix'])
+    print('Calubration results saved in %s' % OUTPUT_FILE)
+
+    with open(OUTPUT_FILE, 'w') as file:
+        file.write(yaml.dump(out))

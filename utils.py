@@ -9,7 +9,7 @@ import sys
 
 def load_images(folder_path):
     os.chdir(folder_path)
-    image_files = glob.glob('*.jpg')
+    image_files = glob.glob('*.JPG')
     print('Found %s images' % len(image_files))
     if len(image_files) == 0:
         return
