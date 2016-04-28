@@ -1,15 +1,16 @@
 from __future__ import print_function
-from utils import load_images, display_images
+from utils import load_images, display_images, ndarray_to_str
 import cv2 as cv
 import numpy as np
-import yaml
 import argparse
-import sys, os
+import sys
+import os
 
 
 DEBUG = False
 DISPLAY_SCALE = 0.45
-OUTPUT_FILE = os.getcwd() + '/output.yml'
+OUTPUT_FILE = os.getcwd() + '/output.txt'
+PATTERN = (9, 6)
 
 
 def find_points(images):
@@ -18,8 +19,9 @@ def find_points(images):
     img_points = []
 
     # Assumed object points relation
-    a_object_point = np.zeros((6 * 9, 3), np.float32)
-    a_object_point[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
+    a_object_point = np.zeros((PATTERN[1] * PATTERN[0], 3), np.float32)
+    a_object_point[:, :2] = np.mgrid[0:PATTERN[0],
+                                     0:PATTERN[1]].T.reshape(-1, 2)
 
     # Termination criteria for sub pixel corners refinement
     stop_criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER,
@@ -71,16 +73,7 @@ def calibrate(images):
     out['distortion_coefficient'] = distortion_coefficient
     out['rotation_v'] = rotation_v
     out['translation_v'] = translation_v
-    matrix_to_str(camera_matrix)
     return out
-
-def matrix_to_str(matrix):
-    matrix_str = str(matrix)
-    matrix_str = matrix_str.replace('[', '')
-    matrix_str = matrix_str.replace(']', '')
-    print(matrix_str)
-    return matrix_str
-        
 
 
 if __name__ == '__main__':
@@ -91,14 +84,24 @@ if __name__ == '__main__':
                              help='display resulting corners')
     args_parser.add_argument('-s', '--scale', type=float, default=0.45,
                              help='display scale to control window size')
+    args_parser.add_argument('-o', '--out', default=OUTPUT_FILE,
+                             help='absolute path for output file')
+    args_parser.add_argument('-p', '--pattern', default="9X6",
+                             help='WXH pattern size for chessboard pictures')
     args = args_parser.parse_args()
 
     DEBUG = args.display_corners
     DISPLAY_SCALE = args.scale
+    OUTPUT_FILE = args.out
+    PATTERN_SIZE = tuple(map(int, args.pattern.split('X')))
 
     images = load_images(args.folder)
     out = calibrate(images)
     print('Calubration results saved in %s' % OUTPUT_FILE)
 
     with open(OUTPUT_FILE, 'w') as file:
-        file.write(yaml.dump(out))
+        file.write(ndarray_to_str(out['camera_matrix']))
+        file.write(ndarray_to_str('\n\n'))
+        file.write(ndarray_to_str(out['distortion_coefficient']))
+        file.write(ndarray_to_str('\n\n'))
+        file.write(ndarray_to_str(out['reprojection_error']))

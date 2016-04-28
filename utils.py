@@ -5,6 +5,7 @@ import numpy as np
 import os
 import glob
 import sys
+import re
 
 
 def load_images(folder_path):
@@ -51,3 +52,11 @@ def display_images(images, scale_factor):
 
     cv.imshow('Object points', resized_out)
     cv.waitKey(0)
+
+
+def ndarray_to_str(ndarray):
+    ndarray_str = str(ndarray)
+    ndarray_str = ndarray_str.replace('[', '')
+    ndarray_str = ndarray_str.replace(']', '')
+    ndarray_str = re.sub(' +', ' ', ndarray_str)
+    return ndarray_str
