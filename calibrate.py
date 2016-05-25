@@ -10,7 +10,7 @@ import os
 DEBUG = False
 DISPLAY_SCALE = 0.45
 OUTPUT_FILE = os.getcwd() + '/output.txt'
-PATTERN = (9, 6)
+PATTERN_SIZE = (9, 6)
 
 
 def find_points(images):
@@ -19,9 +19,10 @@ def find_points(images):
     img_points = []
 
     # Assumed object points relation
-    a_object_point = np.zeros((PATTERN[1] * PATTERN[0], 3), np.float32)
-    a_object_point[:, :2] = np.mgrid[0:PATTERN[0],
-                                     0:PATTERN[1]].T.reshape(-1, 2)
+    a_object_point = np.zeros((PATTERN_SIZE[1] * PATTERN_SIZE[0], 3),
+                              np.float32)
+    a_object_point[:, :2] = np.mgrid[0:PATTERN_SIZE[0],
+                                     0:PATTERN_SIZE[1]].T.reshape(-1, 2)
 
     # Termination criteria for sub pixel corners refinement
     stop_criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER,
@@ -30,7 +31,7 @@ def find_points(images):
     print('Finding points ', end='')
     debug_images = []
     for (image, color_image) in images:
-        found, corners = cv.findChessboardCorners(image, pattern_size, None)
+        found, corners = cv.findChessboardCorners(image, PATTERN_SIZE, None)
         if found:
             obj_points.append(a_object_point)
             cv.cornerSubPix(image, corners, (11, 11), (-1, -1), stop_criteria)
@@ -41,7 +42,7 @@ def find_points(images):
             print('-', end='')
 
         if DEBUG:
-            cv.drawChessboardCorners(color_image, pattern_size, corners, found)
+            cv.drawChessboardCorners(color_image, PATTERN_SIZE, corners, found)
             debug_images.append(color_image)
 
         sys.stdout.flush()
